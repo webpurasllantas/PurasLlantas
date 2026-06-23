@@ -37,34 +37,15 @@ const Booking = () => {
     const googleSheetURL = 'https://script.google.com/macros/s/AKfycbx4pMq3zPql6MP-OPg2wsguyrbJcfylraUrP_UbscstqEQTEzteu6GLJgO1Lv4aOMM4/exec';
 
     try {
-      // 1. Send to Google Sheets
-      const sheetPromise = fetch(googleSheetURL, {
+      // Send to Google Apps Script (handles both Sheet and Email)
+      await fetch(googleSheetURL, {
         method: 'POST',
-        mode: 'no-cors', // Apps Script requires no-cors for simple POST without preflight issues
+        mode: 'no-cors',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
       });
-
-      // 2. Send Email via EmailJS
-      const serviceID = 'default_service';
-      const templateID = 'template_booking';
-      const publicKey = 'YOUR_PUBLIC_KEY'; // Placeholder - user needs to set this
-
-      const templateParams = {
-        to_email: 'purasllantasmostrador@hotmail.com',
-        from_name: formData.nombre,
-        phone: formData.telefono,
-        car: formData.vehiculo,
-        service: formData.servicio,
-        message: formData.mensaje
-      };
-
-      const emailPromise = emailjs.send(serviceID, templateID, templateParams, publicKey);
-
-      // Wait for both (though sheetPromise with no-cors resolves quickly)
-      await Promise.allSettled([sheetPromise, emailPromise]);
 
       setStatus('success');
       setFormData({ nombre: '', telefono: '', vehiculo: '', servicio: '', mensaje: '' });
@@ -72,8 +53,7 @@ const Booking = () => {
 
     } catch (err) {
       console.error('Integration Error:', err);
-      // Fallback: still show success to user if at least one worked or for better UX
-      setStatus('success');
+      setStatus('success'); // Fallback for better UX
     }
   };
 
