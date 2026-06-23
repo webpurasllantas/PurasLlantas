@@ -1,4 +1,7 @@
-# React + Vite
+# Puras Llantas Web
+
+Este es el sitio web oficial de Puras Llantas, desplegado en Vercel.
+
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
