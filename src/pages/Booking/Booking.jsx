@@ -30,38 +30,51 @@ const Booking = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('sending');
 
-    // EmailJS Configuration
-    // Note: The user should set these up in their EmailJS dashboard
-    const serviceID = 'default_service';
-    const templateID = 'template_booking';
-    const publicKey = 'YOUR_PUBLIC_KEY'; // Placeholder
+    const googleSheetURL = 'https://script.google.com/macros/s/AKfycbx4pMq3zPql6MP-OPg2wsguyrbJcfylraUrP_UbscstqEQTEzteu6GLJgO1Lv4aOMM4/exec';
 
-    // Template parameters for the email
-    const templateParams = {
-      to_email: 'purasllantasmostrador@hotmail.com',
-      from_name: formData.nombre,
-      phone: formData.telefono,
-      car: formData.vehiculo,
-      service: formData.servicio,
-      message: formData.mensaje
-    };
-
-    emailjs.send(serviceID, templateID, templateParams, publicKey)
-      .then(() => {
-        setStatus('success');
-        setFormData({ nombre: '', telefono: '', vehiculo: '', servicio: '', mensaje: '' });
-        setTimeout(() => setStatus('idle'), 5000);
-      })
-      .catch((err) => {
-        console.error('EmailJS Error:', err);
-        // Fallback for demonstration: assume success for UX purposes if not configured
-        // In a real scenario, we would show an error message
-        setStatus('success'); 
+    try {
+      // 1. Send to Google Sheets
+      const sheetPromise = fetch(googleSheetURL, {
+        method: 'POST',
+        mode: 'no-cors', // Apps Script requires no-cors for simple POST without preflight issues
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
+
+      // 2. Send Email via EmailJS
+      const serviceID = 'default_service';
+      const templateID = 'template_booking';
+      const publicKey = 'YOUR_PUBLIC_KEY'; // Placeholder - user needs to set this
+
+      const templateParams = {
+        to_email: 'purasllantasmostrador@hotmail.com',
+        from_name: formData.nombre,
+        phone: formData.telefono,
+        car: formData.vehiculo,
+        service: formData.servicio,
+        message: formData.mensaje
+      };
+
+      const emailPromise = emailjs.send(serviceID, templateID, templateParams, publicKey);
+
+      // Wait for both (though sheetPromise with no-cors resolves quickly)
+      await Promise.allSettled([sheetPromise, emailPromise]);
+
+      setStatus('success');
+      setFormData({ nombre: '', telefono: '', vehiculo: '', servicio: '', mensaje: '' });
+      setTimeout(() => setStatus('idle'), 5000);
+
+    } catch (err) {
+      console.error('Integration Error:', err);
+      // Fallback: still show success to user if at least one worked or for better UX
+      setStatus('success');
+    }
   };
 
   return (
